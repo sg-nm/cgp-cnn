@@ -12,7 +12,7 @@ We use the [Chainer](https://chainer.org/) framework for neural networks and tes
 * GPU: GTX 1080 or 1070
 * Python version 3.5.2 (anaconda3-4.1.1)
 
-PyTorch version is [here](https://github.com/sg-nm/cgp-cnn-PyTorch)
+[PyTorch](https://pytorch.org/) version is [here](https://github.com/sg-nm/cgp-cnn-PyTorch)
 
 ## Usage
 
