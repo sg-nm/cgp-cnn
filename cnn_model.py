@@ -89,7 +89,8 @@ class CGP2CNN(chainer.Chain):
             if name == 'pool_max':
                 links += [('_'+name+'_'+str(i), F.max_pooling_2d(self.pool_size, self.pool_size, 0, False))]
             elif name == 'pool_ave':
-                links += [('_'+name+'_'+str(i), F.average_pooling_2d(self.pool_size, self.pool_size, 0, False))]
+                links += [('_'+name+'_'+str(i), F.average_pooling_2d((self.pool_size, self.pool_size), (self.pool_size, self.pool_size), 0, False))]
+                # links += [('_'+name+'_'+str(i), F.average_pooling_2d(self.pool_size, self.pool_size, 0, False))]
             elif name == 'concat':
                 links += [('_'+name+'_'+str(i), F.concat())]
             elif name == 'sum':
