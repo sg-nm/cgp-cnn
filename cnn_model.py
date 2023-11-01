@@ -27,7 +27,7 @@ class ConvBlock(chainer.Chain):
                 x = getattr(self, name)(x)
                 param_num += (f.W.shape[0]*f.W.shape[2]*f.W.shape[3]*f.W.shape[1]+f.W.shape[0])
             elif 'bn1' in name:
-                x = getattr(self, name)(x, not train)
+                x = getattr(self, name)(x) # getattr(self, name)(x, not train)
                 param_num += x.data.shape[1]*2
         return (F.relu(x), param_num)
 
@@ -39,7 +39,7 @@ class ResBlock(chainer.Chain):
         pad_size = ksize // 2
         links  = [('conv1', L.Convolution2D(None, n_out, ksize, pad=pad_size, initialW=initializer))]
         links += [('bn1', L.BatchNormalization(n_out))]
-        links += [('_act1', F.relu)]
+        links += [('_act1', ActivationLayer())]
         links += [('conv2', L.Convolution2D(n_out, n_out, ksize, pad=pad_size, initialW=initializer))]
         links += [('bn2', L.BatchNormalization(n_out))]
         for link in links:
@@ -55,7 +55,7 @@ class ResBlock(chainer.Chain):
                 x = getattr(self, name)(x)
                 param_num += (f.W.shape[0]*f.W.shape[2]*f.W.shape[3]*f.W.shape[1]+f.W.shape[0])
             elif 'bn' in name:
-                x = getattr(self, name)(x, not train)
+                x = getattr(self, name)(x) # , not train)
                 param_num += x.data.shape[1]*2
             elif 'act' in name:
                 x = f(x)
@@ -75,6 +75,42 @@ class ResBlock(chainer.Chain):
         in_data[small_ch_id] = F.concat((in_data[small_ch_id], tmp * 0), axis=1)
         return (F.relu(in_data[0]+in_data[1]), param_num)
 
+class ActivationLayer(chainer.Link):
+    def __init__(self):
+        super(ActivationLayer, self).__init__()
+
+    def __call__(self, x):
+        return F.relu(x)
+
+class MaxPoolingLayer(chainer.Link):
+    def __init__(self, pool_size):
+        super(MaxPoolingLayer, self).__init__()
+        self.pool_size = pool_size
+
+    def __call__(self, x):
+        return F.max_pooling_2d(x, self.pool_size, stride=self.pool_size, pad=0)
+
+class AveragePoolingLayer(chainer.Link):
+    def __init__(self, pool_size):
+        super(AveragePoolingLayer, self).__init__()
+        self.pool_size = pool_size
+
+    def __call__(self, x):
+        return F.average_pooling_2d(x, self.pool_size, stride=self.pool_size, pad=0)
+
+class ConcatLayer(chainer.Link):
+    def __init__(self):
+        super(ConcatLayer, self).__init__()
+
+    def __call__(self, h1, h2):
+        return F.concat((h1, h2), axis=1)
+
+class SumLayer(chainer.Link):
+    def __init__(self):
+        super(SumLayer, self).__init__()
+
+    def __call__(self, h1, h2):
+        return h1 + h2
 
 # Construct a CNN model using CGP (list)
 class CGP2CNN(chainer.Chain):
@@ -87,14 +123,14 @@ class CGP2CNN(chainer.Chain):
         i = 1
         for name, in1, in2 in self.cgp:
             if name == 'pool_max':
-                links += [('_'+name+'_'+str(i), F.max_pooling_2d(self.pool_size, self.pool_size, 0, False))]
+                links += [('_'+name+'_'+str(i), MaxPoolingLayer(self.pool_size))]
             elif name == 'pool_ave':
-                links += [('_'+name+'_'+str(i), F.average_pooling_2d((self.pool_size, self.pool_size), (self.pool_size, self.pool_size), 0, False))]
+                links += [('_'+name+'_'+str(i), AveragePoolingLayer(self.pool_size))]
                 # links += [('_'+name+'_'+str(i), F.average_pooling_2d(self.pool_size, self.pool_size, 0, False))]
             elif name == 'concat':
-                links += [('_'+name+'_'+str(i), F.concat())]
+                links += [('_'+name+'_'+str(i), ConcatLayer())]
             elif name == 'sum':
-                links += [('_'+name+'_'+str(i), F.concat())] # the F.Concat() is dummy
+                links += [('_'+name+'_'+str(i), SumLayer())] # the F.Concat() is dummy
             elif name == 'ConvBlock32_3':
                 links += [(name+'_'+str(i), ConvBlock(3, 32, initializer))]
             elif name == 'ConvBlock32_5':

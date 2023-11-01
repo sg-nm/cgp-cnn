@@ -187,8 +187,10 @@ class CNN_train():
         model.train = False
         test_accuracy = test_loss = 0
         for i in six.moves.range(0, self.test_data_num, batchsize):
-            x = chainer.Variable(cuda.to_gpu(self.x_test[i:i + batchsize]), volatile=True)
-            t = chainer.Variable(cuda.to_gpu(self.y_test[i:i + batchsize]), volatile=True)
+            with chainer.using_config('train', False):
+                # x = chainer.Variable(cuda.to_gpu(self.x_test[i:i + batchsize]))
+                x = chainer.Variable(cuda.to_gpu(self.x_test[i:i + batchsize]))
+                t = chainer.Variable(cuda.to_gpu(self.y_test[i:i + batchsize]))
             loss = model(x, t)
             test_loss += float(loss.data) * len(t.data)
             test_accuracy += float(model.accuracy.data) * len(t.data)

@@ -161,7 +161,7 @@ class CGP(object):
         return evaluations
 
     def _log_data(self, net_info_type='active_only'):
-        log_list = [self.num_gen, self.num_eval, time.clock(), self.pop[0].eval, self.pop[0].count_active_node()]
+        log_list = [self.num_gen, self.num_eval, time.perf_counter(), self.pop[0].eval, self.pop[0].count_active_node()]
         if net_info_type == 'active_only':
             log_list.append(self.pop[0].active_net_list())
         elif net_info_type == 'full':
