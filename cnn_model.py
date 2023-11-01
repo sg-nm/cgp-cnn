@@ -39,7 +39,7 @@ class ResBlock(chainer.Chain):
         pad_size = ksize // 2
         links  = [('conv1', L.Convolution2D(None, n_out, ksize, pad=pad_size, initialW=initializer))]
         links += [('bn1', L.BatchNormalization(n_out))]
-        links += [('_act1', F.ReLU())]
+        links += [('_act1', F.relu())]
         links += [('conv2', L.Convolution2D(n_out, n_out, ksize, pad=pad_size, initialW=initializer))]
         links += [('bn2', L.BatchNormalization(n_out))]
         for link in links:
