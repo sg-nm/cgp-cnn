@@ -91,9 +91,9 @@ class CGP2CNN(chainer.Chain):
             elif name == 'pool_ave':
                 links += [('_'+name+'_'+str(i), F.average_pooling_2d(self.pool_size, self.pool_size, 0, False))]
             elif name == 'concat':
-                links += [('_'+name+'_'+str(i), F.Concat())]
+                links += [('_'+name+'_'+str(i), F.concat())]
             elif name == 'sum':
-                links += [('_'+name+'_'+str(i), F.Concat())] # the F.Concat() is dummy
+                links += [('_'+name+'_'+str(i), F.concat())] # the F.Concat() is dummy
             elif name == 'ConvBlock32_3':
                 links += [(name+'_'+str(i), ConvBlock(3, 32, initializer))]
             elif name == 'ConvBlock32_5':
