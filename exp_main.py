@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
             # Evaluation function for CGP (training CNN and return validation accuracy)
             eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', valid_data_ratio=0.1, verbose=True,
-                                epoch_num=50, batchsize=128)
+                                epoch_num=30, batchsize=128)
 
             # Execute evolution
             cgp = CGP(network_info, eval_f, lam=args.lam)
