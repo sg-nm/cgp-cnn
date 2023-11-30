@@ -112,16 +112,16 @@ class SumLayer(chainer.Link):
     def __call__(self, h1, h2):
         return h1 + h2
 
-# Construct a CNN model using CGP (list)
-class CGP2CNN(chainer.Chain):
-    def __init__(self, cgp, n_class, lossfun=softmax_cross_entropy.softmax_cross_entropy, accfun=accuracy.accuracy):
-        super(CGP2CNN, self).__init__()
-        self.cgp = cgp
+# Construct a CNN model using GEP (list)
+class GEP2CNN(chainer.Chain):
+    def __init__(self, gep, n_class, lossfun=softmax_cross_entropy.softmax_cross_entropy, accfun=accuracy.accuracy):
+        super(GEP2CNN, self).__init__()
+        self.gep = gep
         self.pool_size = 2
         initializer = chainer.initializers.HeNormal()
         links = []
         i = 1
-        for name, in1, in2 in self.cgp:
+        for name, in1, in2 in self.gep:
             if name == 'pool_max':
                 links += [('_'+name+'_'+str(i), MaxPoolingLayer(self.pool_size))]
             elif name == 'pool_ave':
@@ -179,7 +179,7 @@ class CGP2CNN(chainer.Chain):
         self.accfun = accfun
         self.loss = None
         self.accuracy = None
-        self.outputs = [None for _ in range(len(self.cgp))]
+        self.outputs = [None for _ in range(len(self.gep))]
         self.param_num = 0
 
     def __call__(self, x, t):
@@ -190,23 +190,23 @@ class CGP2CNN(chainer.Chain):
         param_num = 0
         for name, f in self.forward:
             if 'ConvBlock' in name:
-                outputs[nodeID], tmp_num = getattr(self, name)(outputs[self.cgp[nodeID][1]], self.train)
+                outputs[nodeID], tmp_num = getattr(self, name)(outputs[self.gep[nodeID][1]], self.train)
                 nodeID += 1
                 param_num += tmp_num
             elif 'ResBlock' in name:
-                outputs[nodeID], tmp_num = getattr(self, name)(outputs[self.cgp[nodeID][1]], outputs[self.cgp[nodeID][1]], self.train)
+                outputs[nodeID], tmp_num = getattr(self, name)(outputs[self.gep[nodeID][1]], outputs[self.gep[nodeID][1]], self.train)
                 nodeID += 1
                 param_num += tmp_num
             elif 'pool' in name:
                 # check of the image size
-                if outputs[self.cgp[nodeID][1]].shape[2] > 1:
-                    outputs[nodeID] = f(outputs[self.cgp[nodeID][1]])
+                if outputs[self.gep[nodeID][1]].shape[2] > 1:
+                    outputs[nodeID] = f(outputs[self.gep[nodeID][1]])
                     nodeID += 1
                 else:
-                    outputs[nodeID] = outputs[self.cgp[nodeID][1]]
+                    outputs[nodeID] = outputs[self.gep[nodeID][1]]
                     nodeID += 1
             elif 'concat' in name:
-                in_data = [outputs[self.cgp[nodeID][1]], outputs[self.cgp[nodeID][2]]]
+                in_data = [outputs[self.gep[nodeID][1]], outputs[self.gep[nodeID][2]]]
                 # check of the image size
                 small_in_id, large_in_id = (0, 1) if in_data[0].shape[2] < in_data[1].shape[2] else (1, 0)
                 pool_num = xp.floor(xp.log2(in_data[large_in_id].shape[2] / in_data[small_in_id].shape[2]))
@@ -216,7 +216,7 @@ class CGP2CNN(chainer.Chain):
                 outputs[nodeID] = f(in_data[0], in_data[1])
                 nodeID += 1
             elif 'sum' in name:
-                in_data = [outputs[self.cgp[nodeID][1]], outputs[self.cgp[nodeID][2]]]
+                in_data = [outputs[self.gep[nodeID][1]], outputs[self.gep[nodeID][2]]]
                 # check of the image size
                 small_in_id, large_in_id = (0, 1) if in_data[0].shape[2] < in_data[1].shape[2] else (1, 0)
                 pool_num = xp.floor(xp.log2(in_data[large_in_id].shape[2] / in_data[small_in_id].shape[2]))
@@ -231,11 +231,11 @@ class CGP2CNN(chainer.Chain):
                 outputs[nodeID] = in_data[0] + in_data[1]
                 nodeID += 1
             elif 'full' in name:
-                outputs[nodeID] = getattr(self, name)(outputs[self.cgp[nodeID][1]])
+                outputs[nodeID] = getattr(self, name)(outputs[self.gep[nodeID][1]])
                 nodeID += 1
                 param_num += f.W.data.shape[0] * f.W.data.shape[1] + f.b.data.shape[0]
             else:
-                print('not defined function at CGP2CNN __call__')
+                print('not defined function at GEP2CNN __call__')
                 exit(1)
         self.param_num = param_num
 

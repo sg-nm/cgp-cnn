@@ -9,16 +9,16 @@ import time
 import numpy as np
 from chainer import serializers
 
-from cnn_model import CGP2CNN
+from gep_cnn_model import GEP2CNN
 
 
 # __init__: load dataset
-# __call__: training the CNN defined by CGP list
-class CNN_train():
+# __call__: training the CNN defined by GEP list
+class GEP_CNN_train():
     def __init__(self, dataset_name, validation=True, valid_data_ratio=0.1, verbose=True):
         # dataset_name: name of data set ('cifar10' or 'cifar100' or 'mnist')
         # validation: [True]  model validation mode
-        #                     (split training data set according to valid_data_ratio for evaluation of CGP individual)
+        #                     (split training data set according to valid_data_ratio for evaluation of GEP individual)
         #             [False] model test mode for final evaluation of the evolved model
         #                     (raining data : all training data, test data : all test data)
         # valid_data_ratio: ratio of the validation data
@@ -83,7 +83,7 @@ class CNN_train():
             print('\ttrain data shape:', self.x_train.shape)
             print('\ttest data shape :', self.x_test.shape)
 
-    def __call__(self, cgp, gpuID, epoch_num=200, batchsize=256, weight_decay=1e-4, eval_epoch_num=10,
+    def __call__(self, gep, gpuID, epoch_num=200, batchsize=256, weight_decay=1e-4, eval_epoch_num=10,
                  data_aug=True, comp_graph='comp_graph.dot', out_model='mymodel.model', init_model=None,
                  retrain_mode=False):
         if self.verbose:
@@ -92,7 +92,7 @@ class CNN_train():
             print('\tbatchsize:', batchsize)
 
         chainer.cuda.get_device(gpuID).use()  # Make a specified GPU current
-        model = CGP2CNN(cgp, self.n_class)
+        model = GEP2CNN(gep, self.n_class)
         if init_model is not None:
             if self.verbose:
                 print('\tLoad model from', init_model)
@@ -164,9 +164,9 @@ class CNN_train():
 
         return np.max(test_accuracies)
 
-    def test(self, cgp, model_file, comp_graph='comp_graph.dot', batchsize=256):
+    def test(self, gep, model_file, comp_graph='comp_graph.dot', batchsize=256):
         chainer.cuda.get_device(0).use()  # Make a specified GPU current
-        model = CGP2CNN(cgp, self.n_class)
+        model = GEP2CNN(gep, self.n_class)
         print('\tLoad model from', model_file)
         serializers.load_npz(model_file, model)
         model.to_gpu(0)
